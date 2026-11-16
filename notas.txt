@@ -1,4 +1,23 @@
 
+VERSION KAFKA PROFE
+sudo docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic products.commands --partitions 1 --replication-factor 1 
+
+
+DESDE DENTRO DEL CONTENEDOR:
+
+docker exec -it kafka bash
+
+kafka-topics --bootstrap-server localhost:9092 --create --topic products.commands --partitions 1 --replication-factor 1
+
+VERIFICA CCREACION DE TOPIC
+
+kafka-topics --bootstrap-server localhost:9092 --list
+
+
+
+---
+
+
 
 kafka-topics --create --topic products.commands --bootstrap-server localhost:9092 --partitions 1 -- replication-factor 1
 
@@ -8,3 +27,41 @@ kafka-console-consumer --topic products.commands --bootstrap-server localhost:90
 22 ---------------
 docker pull mysql:latest
 docker run -d --name mysql --restart always -p 3306:3306 -e MYSQL_ROOT_PASSWORD=sasa -e MYSQL_DATABASE=db_spring_kafka mysql:8
+
+
+
+:::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+18
+
+SE GENERA CONTENEDOR KAFKA:
+sudo docker run -d --name kafka -p 9092:9092 apache/kafka:latest
+
+INGRESAR AL CONTENEDOR
+sudo docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic products.commands --partitions 1 --replication-factor 1 
+
+LISTAR LOS TOPICOS
+sudo docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list 
+
+
+::::::::::::::::
+
+
+19
+
+SEGUIMIENTO DE TOPICO PRODUCTS COMMANDS
+
+DESPLIEGUE DE APPS api y command
+
+./mvnw clean spring-boot:run
+
+
+REQUEST AL BACK DE API:
+
+curl -X POST http://localhost:8080/products -H "Content-Type: application/json" -d '{"name":"teclado", "price":12.9}'
+
+sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products.commands --from-beginning
+
+  
