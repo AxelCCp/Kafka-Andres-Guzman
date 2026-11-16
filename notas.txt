@@ -65,3 +65,42 @@ curl -X POST http://localhost:8080/products -H "Content-Type: application/json" 
 sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products.commands --from-beginning
 
   
+::::::::::::::::
+
+22
+
+MY SQL
+
+sudo docker pull mysql:latest 
+
+sudo docker run -d --name mysql --restart always -p 3306:3306 -e MYSQL_ROOT_PASSWORD=sasa -e MYSQL_DATABASE=db_spring_kafka mysql:latest
+
+sudo docker logs mysql
+
+INGRESO A LA TERMINAL DE MYSQL
+
+sudo docker exec -it mysql mysql -uroot -psasa -e "SHOW DATABASES;"
+
+sudo docker exec -it mysql mysql -uroot -psasa
+
+SE CREA TABLA CON TERMINAL
+
+
+mysql> use db_spring_kafka
+
+
+CREATE TABLE inventory(id INT AUTO_INCREMENT PRIMARY KEY, quantity INT DEFAULT 0);
+
+mysql> insert into inventory (quantity) values(7);
+Query OK, 1 row affected (0.007 sec)
+
+mysql> select * from inventory;
++----+----------+
+| id | quantity |
++----+----------+
+|  1 |        7 |
++----+----------+
+1 row in set (0.000 sec)
+
+mysql> 
+

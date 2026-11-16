@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ProductsCommandApplication<products-command>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.course.kafka.command.ProductsCommandApplication",
+            "projectName": "products-command",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ProductsApiApplication<products-api>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.course.kafka.api.ProductsApiApplication",
+            "projectName": "products-api",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
