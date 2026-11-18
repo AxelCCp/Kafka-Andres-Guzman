@@ -104,3 +104,44 @@ mysql> select * from inventory;
 
 mysql> 
 
+
+::::::::::::::::::::::::::::::::::::::::::::::
+
+28
+
+PROBANDO MICROSERVICIOS CON MYSQL
+
+boo@fedora:~/Documentos/a0_study/a2_kafka_AndresGuzman/Kafka-Andres-Guzman$ sudo docker ps 
+CONTAINER ID   IMAGE                 COMMAND                  CREATED        STATUS          PORTS                                                    NAMES
+5085bf79d8e0   mysql:latest          "docker-entrypoint.s…"   3 hours ago    Up 3 hours      0.0.0.0:3306->3306/tcp, [::]:3306->3306/tcp, 33060/tcp   mysql
+0253aed2d273   apache/kafka:latest   "/__cacert_entrypoin…"   18 hours ago   Up 10 seconds   0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp              kafka
+
+
+SE PONE A ESCUCHAR A KAFKA
+
+sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products.commands --from-beginning
+
+
+curl -X POST http://localhost:8080/products -H "Content-Type: application/json" -d '{"name":"teclado zzz", "price":12.9}'
+
+
+
+:::::::::::::::::::::::::::::::::::::::::::::::
+
+
+30
+
+SE CREA NUEVO TOPIC
+
+
+
+sudo docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic products.replies --partitions 1 --replication-factor 1
+sudo docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+
+
+sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products.replies --from-beginning
+
+sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products.commands --from-beginning
+
+curl -X POST http://localhost:8080/products -H "Content-Type: application/json" -d '{"name":"teclado zzz 777", "price":32.9}'
