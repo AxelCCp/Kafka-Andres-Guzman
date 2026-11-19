@@ -145,3 +145,121 @@ sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-
 sudo docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products.commands --from-beginning
 
 curl -X POST http://localhost:8080/products -H "Content-Type: application/json" -d '{"name":"teclado zzz 777", "price":32.9}'
+
+
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+53 KAFKA UI
+
+
+Check list antes de instalar
+Kafka UI
+Vamos a instalar Kafka UI para poder:
+
+  • Ver topics
+
+  • Ver mensajes
+
+  • Ver headers (correlationId)
+
+  • Ver consumer groups
+
+  • Ver offsets
+
+Y todo desde navegador.
+
+
+
+1) Pull de la imagen
+
+docker pull provectuslabs/kafka-ui:latest
+
+
+
+2) Eliminar contenedor kafka actual
+
+docker ps
+docker rm -f kafka
+
+
+3) Crear una red Docke
+
+docker network create kafka-net
+
+
+
+4) Volver a Levantar Kafka anunciándose como kafka:9092 y red ya que requiere configuración mínima de KRaft (roles, controller quorum, listeners, etc.)
+
+Genera un Cluster ID (una vez):
+
+Para MacOs y Linux:
+
+CLUSTER_ID=$(docker run --rm apache/kafka:latest /opt/kafka/bin/kafka-storage.sh random-uuid)
+echo $CLUSTER_ID
+
+
+Para Windows en PowerShell sería:
+
+$CLUSTER_ID = docker run --rm apache/kafka:latest /opt/kafka/bin/kafka-storage.sh random-uuid
+echo $CLUSTER_ID
+
+
+
+O bien generan el ID y copian el UUID manualmente:
+
+
+docker run --rm apache/kafka:latest /opt/kafka/bin/kafka-storage.sh random-uuid
+
+o usan este q1Sh-9YxT5u8cKzR2mVnLg
+
+
+
+Luego ejecutamos el comando para crear kafka:
+
+docker run -d \
+  --name kafka \
+  --network kafka-net \
+  -p 9092:9092 \
+  -e KAFKA_NODE_ID=1 \
+  -e KAFKA_CLUSTER_ID=$CLUSTER_ID \
+  -e KAFKA_PROCESS_ROLES=broker,controller \
+  -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
+  -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:19092,CONTROLLER://0.0.0.0:9093 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,INTERNAL://kafka:19092 \
+  -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT \
+  -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+  -e KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL \
+  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+  -e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
+  apache/kafka:latest
+
+
+5) Levantar Kafka UI apuntando al nombre del contenedor kafka:
+
+docker run -d \
+  --name kafka-ui \
+  --network kafka-net \
+  -p 8085:8080 \
+  -e KAFKA_CLUSTERS_0_NAME=local \
+  -e KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:19092 \
+  provectuslabs/kafka-ui:latest
+
+
+6) Abrir en navegador, ir a: http://localhost:8085
+
+Verás el cluster “local”.
+
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+DOCKER 
+
+
+sudo docker ps 
