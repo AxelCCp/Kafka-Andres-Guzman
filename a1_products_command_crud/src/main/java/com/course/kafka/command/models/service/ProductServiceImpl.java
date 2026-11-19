@@ -1,5 +1,7 @@
 package com.course.kafka.command.models.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,5 +28,43 @@ public class ProductServiceImpl implements ProductService{
         Product p_db = this.productRepo.save(Mapper.toEntity(dto));
         return Mapper.toDto(p_db);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductDto findById(Long id) {
+        return this.productRepo.findById(id).map(p -> Mapper.toDto(p)).orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> findAll() {
+        return ((List<Product>)this.productRepo.findAll()).stream().map(p -> Mapper.toDto(p)).toList();
+    }
+
+    @Override
+    @Transactional 
+    public ProductDto update(Long id, ProductDto dto) {
+        Product entity = this.productRepo.findById(id).orElse(null);
+        if(entity == null) {
+            return  null;
+        }
+        entity.setName(dto.name());
+        entity.setPrice(dto.price());
+        Product p_db = this.productRepo.save(entity);
+        return Mapper.toDto(p_db);
+    }
+
+    @Override
+    @Transactional 
+    public boolean delete(Long id) {
+        boolean result = this.productRepo.existsById(id);
+        if(result) {
+            this.productRepo.deleteById(id);
+            return  true;
+        }
+        return false;
+    }
+
+
 
 }

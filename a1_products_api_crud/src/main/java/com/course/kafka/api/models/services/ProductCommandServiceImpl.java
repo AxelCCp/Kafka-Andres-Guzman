@@ -2,6 +2,7 @@ package com.course.kafka.api.models.services;
 
 import com.course.kafka.api.messaging.ReplyInbox;
 import com.course.kafka.api.models.Command;
+import com.course.kafka.api.models.CommandType;
 import com.course.kafka.api.models.Reply;
 import com.course.kafka.api.models.dto.ProductDto;
 
@@ -47,8 +48,18 @@ public class ProductCommandServiceImpl implements ProductCommandService {
 
     @Override
     public Reply<?> SendCreateAndAwait(ProductDto productDto, Duration timeout) {
-        
-        Command<ProductDto> cmd = new Command<>("CREATE", null, productDto);
+        Command<ProductDto> cmd = new Command<>(CommandType.CREATE, null, productDto);
+        return sendAndAwait(timeout, cmd); 
+    }
+
+    @Override
+    public Reply<?> sendReadAndAwait(Long id, Duration timeout) {
+        Command<ProductDto> cmd = new Command<>(CommandType.READ, id, null);
+        return sendAndAwait(timeout, cmd); 
+    }
+
+
+    private Reply<?> sendAndAwait(Duration timeout, Command<?> cmd) {
         
         String correlationId = UUID.randomUUID().toString();
 
@@ -56,7 +67,8 @@ public class ProductCommandServiceImpl implements ProductCommandService {
 
         CompletableFuture<Reply<?>> future = replyInbox.register(correlationId);
 
-        Message<Command<ProductDto>>msg = MessageBuilder.withPayload(cmd).setHeader("correlationId", correlationId).build();
+        Message<?>msg = MessageBuilder.withPayload(cmd).setHeader("correlationId", correlationId).build();
+
         //boolean sent = this.bridge.send("commands-out-0", cmd);
         boolean sent = this.bridge.send("commands-out-0", msg);
         
@@ -68,6 +80,24 @@ public class ProductCommandServiceImpl implements ProductCommandService {
             return  future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException("timeout... esperando respuesta de products-command desde kafka",e);       
-        } 
+        }
+    }
+
+    @Override
+    public Reply<?> sendReadAllAndAwait(Duration timeout) {
+        Command<Object>cmd = new Command<>(CommandType.READ_ALL, null, null);
+        return this.sendAndAwait(timeout, cmd);
+    }
+
+    @Override
+    public Reply<?> sendUpdateAllAndAwait(Long id, ProductDto dto, Duration timeout) {
+        Command<ProductDto>cmd = new Command<>(CommandType.UPDATE, id, dto);
+        return sendAndAwait(timeout, cmd);
+    }
+
+    @Override
+    public Reply<?> sendDeleteAndAwait(Long id, Duration timeout) {
+        Command<Object>cmd = new Command<>(CommandType.DELETE, id, null);
+        return sendAndAwait(timeout, cmd);
     }
 }

@@ -1,7 +1,9 @@
 package com.course.kafka.command;
 
 import com.course.kafka.command.models.Command;
+import com.course.kafka.command.models.CommandType;
 import com.course.kafka.command.models.Reply;
+import com.course.kafka.command.models.ReplyStatus;
 import com.course.kafka.command.models.dto.ProductDto;
 import com.course.kafka.command.models.service.ProductService;
 
@@ -12,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
-import java.util.function.Consumer;
+
 import java.util.function.Function;
 
 @Configuration
@@ -40,49 +42,88 @@ public class ProductCommandConsumer {
 
             log.info("comando recibido y consumido con exito:  type: {}, body: {}", cmd.type(), cmd.body());
 
-            String type = cmd.type() == null ? "" : cmd.type().toUpperCase();
+            //String type = cmd.type() == null ? "" : cmd.type().toUpperCase();
 
-            Reply<ProductDto>reply;
+            Reply<?>reply;
 
-            log.info("***type={}", type);
+            log.info("***type={}", cmd.type());
 
-            switch(type) {
+            switch(cmd.type()) {
 
-                case "CREATE" -> {
+                case CommandType.CREATE -> {
 
                     if(cmd.body() == null) {
                         log.warn("Create empty body");
-                        reply = new Reply<>("ERROR", "create empty body", null);
+                        reply = new Reply<>(ReplyStatus.ERROR, "create empty body", null);
                     }
 
                     ProductDto productDto = cmd.body();
                     ProductDto dto_db = this.productService.create(productDto);
 
                     log.info("*** creating product name={}, price={}", dto_db.name(), dto_db.price());
-                    reply = new Reply<>("Success", "Create product name", dto_db);
+                    reply = new Reply<>(ReplyStatus.SUCCESS, "Create product name", dto_db);
+
                 }
 
-                /* 
-                case "UPDATE" -> {
-                    log.info("*** updating product name={}, price={}", null, null);
+                case CommandType.READ -> {
+
+                    if(cmd.id() == null) {
+                        log.warn("read empty id");
+                        reply = new Reply<>(ReplyStatus.ERROR, "read empty id.... id required", null);
+                    }
+                    ProductDto dto = this.productService.findById(cmd.id());
+                    reply = (dto == null) ? new Reply<>(ReplyStatus.SUCCESS, "product not found", null) : new Reply<>(ReplyStatus.SUCCESS, "Read product name", dto);
+
+                    log.info("obteniendo producto por id");
+
                 }
 
-                case "DELETE" -> {
-                    log.info("*** deleting product");
-                }
+                case CommandType.READ_ALL -> {
 
-                case "FIND_ALL" -> {
+                    reply = new Reply<>(ReplyStatus.SUCCESS, "Read all products list ", this.productService.findAll());
                     log.info("listando los productos");
+
                 }
 
-                case "READ_ONE" -> {
-                    log.info("obteniendo producto");
+                case CommandType.UPDATE -> {
+                    
+                    if(cmd.body() == null || cmd.id() == null) {
+                        log.warn("id and body is required!!!");
+                        reply = new Reply<>(ReplyStatus.ERROR, "id and body is required", null);
+                    }
+
+                    ProductDto dto = this.productService.findById(cmd.id());
+                    
+                    if(dto != null) {
+                        reply = new Reply<>(ReplyStatus.SUCCESS, "updated product ok", dto);
+                        log.info("*** updating product name={}, price={}", dto.name(), dto.price());
+                    } else {
+                        reply = new Reply<>(ReplyStatus.ERROR, "product not found", null);
+                        log.info("product not found ***");
+                    }
+                    
                 }
-                */
+
+                case CommandType.DELETE -> {
+
+                    if(cmd.id() == null) {
+                        log.warn("read empty id");
+                        reply = new Reply<>(ReplyStatus.ERROR, "read empty id.... id required", null);
+                    }
+                    boolean result = productService.delete(cmd.id());
+
+                    reply = result ? new Reply<>(ReplyStatus.SUCCESS, "deleting product", "deleted") : new Reply<>(ReplyStatus.ERROR, "NOT FOUND ..", null);
+
+                    log.info("*** deleting product");
+
+                }
+
 
                 default -> {
+
                     log.warn("*** ENTRO  EN EL DEFAULT ***");
-                    reply = new Reply<>("ERROR", "unkdown command type", null);
+                    reply = new Reply<>(ReplyStatus.ERROR, "unkdown command type", null);
+
                 }
 
             }
